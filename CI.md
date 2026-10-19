@@ -6,6 +6,16 @@
 
 原有 `release` job 的步骤与 `force_release` 手动输入保留，但 job 限定在上游 `BryceWG/BiBi-Keyboard` 运行，push 仍只限 main/master，手动发布行为不变。扩大 workflow 的 push 触发范围后，版本检查仍防止上游无版本变化时发布。两个 job 分开是为了让 fork 的 CI 仅有只读权限，而原发布 job 的写权限不会用于 fork。
 
+## 签名 Release APK
+
+本 fork 的 `signed_release` job 在 main 分支 push 时自动运行；也可手动运行工作流，保持 `build_signed_release=true`。它构建经过压缩的 arm64 release APK，独立上传 Actions artifact，不创建公开 GitHub Release，不依赖版本号变化。
+
+仓库 Secrets 配置 `KEYSTORE_BASE64`、`KEYSTORE_PASSWORD`、`KEY_ALIAS`、`KEY_PASSWORD`；使用固定 release 密钥，后续版本沿用相同签名。密钥仅在构建步骤注入，临时文件退出时清理，不进入源码、构建缓存或 artifact。release job 只有 `contents: read` 权限。此签名与先前的 Android Debug 签名不同，不能直接覆盖旧 debug 安装。
+
+产物 `BiBi-Keyboard-release-arm64-v8a-<完整提交 SHA>-<运行次数>` 保留 30 天，包含 APK、SHA256SUMS、签名验证、APK 元数据和构建来源。构建时核对固定证书 SHA-256 `8842fb6fa8fe13be2468f5a9160255b4841ed093892e7a0082ba5102e48353c7`、arm64 ABI 和非 debuggable 属性。
+
+原有 debug job 继续执行完整 lint/测试，已知 Chinese-ITN 基线测试失败仍会让整个 workflow 显示失败；请分别核对 signed_release 的执行结果和测试报告，不能把出包成功称为全套测试通过。
+
 ## 检查和产物
 
 1. 在 GitHub 托管的 `ubuntu-24.04` 上配置 Temurin JDK 21，并验证 Gradle wrapper。
@@ -58,10 +68,10 @@ unset SF_FREE_API_KEY POCKETBASE_BASE_URL KEYSTORE_FILE KEYSTORE_PASSWORD KEY_AL
 
 ## 权限和维护
 
-- Fork 的 `debug` job 仅使用 `contents: read`；checkout 不保存凭证，不增加 secrets、OIDC 或发布权限
-- 所有 Gradle 命令显式清除内置服务、PocketBase 和发布签名环境变量
+- Fork 的 `debug` job 仅使用 `contents: read`；checkout 不保存凭证，debug job 不使用签名 Secrets，不增加 OIDC 或发布权限
+- debug job 的 Gradle 命令显式清除内置服务、PocketBase 和发布签名环境变量；signed_release 仅注入专用签名变量
 - 新增 debug job 的 GitHub 与 Gradle 官方 Actions 固定到完整提交 SHA，并在旁边标注版本
-- Gradle 仅使用 GitHub 基础缓存；不上传依赖图或发布 Build Scan
+- debug job 使用 GitHub 基础缓存，signed_release 禁用构建缓存；两者都不上传依赖图或发布 Build Scan
 - 不缓存临时 debug keystore，也不上传源代码、完整工作目录或参考语料
 - 原有 release job 的步骤保持原样，并保留串行、不取消进行中发布的并发策略；fork CI 按分支取消被新提交替代的运行
 
@@ -69,4 +79,4 @@ unset SF_FREE_API_KEY POCKETBASE_BASE_URL KEYSTORE_FILE KEYSTORE_PASSWORD KEY_AL
 
 ## English summary
 
-The existing Release on Version Bump workflow is reused. On Langingsing/BiBi-Keyboard, every push and manual dispatch runs the read-only debug job: Kotlin main/test lint, the full debug unit suite, and an arm64 debug APK build. The original release steps remain intact and can run only in BryceWG/BiBi-Keyboard, retaining their original main/master/manual scope. Failures remain failures, but APK assembly/upload continues after a failed check when setup succeeded. Reports and APK/checksum artifacts last 14 days. The Chinese-ITN corpus test has a known baseline mismatch; its pinned corpus is downloaded and verified at runtime rather than redistributed. Tencent results are summarized from the full test report. No production deployment or signing secrets are introduced for the fork; a fresh runner's debug key may prevent updating over earlier installations.
+The existing Release on Version Bump workflow is reused. On Langingsing/BiBi-Keyboard, every push and manual dispatch runs the read-only debug job: Kotlin main/test lint, the full debug unit suite, and an arm64 debug APK build. The original release steps remain intact and can run only in BryceWG/BiBi-Keyboard, retaining their original main/master/manual scope. Failures remain failures, but APK assembly/upload continues after a failed check when setup succeeded. Reports and APK/checksum artifacts last 14 days. The Chinese-ITN corpus test has a known baseline mismatch; its pinned corpus is downloaded and verified at runtime rather than redistributed. Tencent results are summarized from the full test report. The separate signed_release job uses repository signing secrets and uploads a verified release APK artifact without publishing a GitHub Release; a fresh runner's debug key may prevent updating over earlier installations.
