@@ -994,6 +994,7 @@ data class AsrSettingsUiState(
     val isOpenRouterVisible: Boolean get() = selectedVendor == AsrVendor.OpenRouter
     val isDashVisible: Boolean get() = selectedVendor == AsrVendor.DashScope
     val isGeminiVisible: Boolean get() = selectedVendor == AsrVendor.Gemini
+    val isTencentVisible: Boolean get() = selectedVendor == AsrVendor.Tencent
     val isSonioxVisible: Boolean get() = selectedVendor == AsrVendor.Soniox
     val isStepAudioVisible: Boolean get() = selectedVendor == AsrVendor.StepAudio
     val isSenseVoiceVisible: Boolean get() = selectedVendor == AsrVendor.SenseVoice

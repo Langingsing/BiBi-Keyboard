@@ -3,6 +3,7 @@ package com.brycewg.asrkb.ui.history
 
 import android.content.Context
 import com.brycewg.asrkb.LocaleHelper
+import com.brycewg.asrkb.asr.AsrBackupPolicyDecision
 import com.brycewg.asrkb.asr.AsrEngineConstructionSource
 import com.brycewg.asrkb.asr.AsrEngineInvocationMode
 import com.brycewg.asrkb.asr.AsrParallelEngineFactory
@@ -92,18 +93,20 @@ internal class AsrHistoryRerunCoordinator(
         val primary = prefs.asrVendor
         var engine: StreamingAsrEngine? = null
         try {
-            val runningEngine = AsrParallelEngineFactory().createOrNull(
-                context = localizedContext,
-                scope = scope,
-                prefs = prefs,
-                listener = listener,
-                primaryVendor = primary,
-                backupVendor = prefs.backupAsrVendor,
-                externalPcmInput = true,
-                modePreferences = decision.modePreferences,
-                onPrimaryRequestDuration = { requestMs = it },
-                modelOverride = decision.modelOverride
-            ) ?: AsrPushPcmEngineFactory().createOrNull(
+            val runningEngine = AsrParallelEngineFactory()
+                .takeUnless { decision.backupPolicy == AsrBackupPolicyDecision.UsePrimaryOnly }
+                ?.createOrNull(
+                    context = localizedContext,
+                    scope = scope,
+                    prefs = prefs,
+                    listener = listener,
+                    primaryVendor = primary,
+                    backupVendor = prefs.backupAsrVendor,
+                    externalPcmInput = true,
+                    modePreferences = decision.modePreferences,
+                    onPrimaryRequestDuration = { requestMs = it },
+                    modelOverride = decision.modelOverride
+                ) ?: AsrPushPcmEngineFactory().createOrNull(
                 context = localizedContext,
                 scope = scope,
                 prefs = prefs,

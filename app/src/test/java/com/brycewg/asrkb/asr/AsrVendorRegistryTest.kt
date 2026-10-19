@@ -65,7 +65,8 @@ class AsrVendorRegistryTest {
                 AsrVendor.Qwen3Asr,
                 AsrVendor.Parakeet,
                 AsrVendor.FireRedAsr,
-                AsrVendor.XAsr
+                AsrVendor.XAsr,
+                AsrVendor.Tencent
             ),
             AsrVendorRegistry.ordered().map { it.vendor }
         )
@@ -96,6 +97,11 @@ class AsrVendorRegistryTest {
     @Test
     fun displayNamesAndTagsMatchCurrentUiMetadata() {
         val expected = mapOf(
+            AsrVendor.Tencent to metadata(
+                R.string.vendor_tencent,
+                AsrVendorDisplayTag.Online,
+                AsrVendorDisplayTag.Streaming
+            ),
             AsrVendor.Volc to metadata(
                 R.string.vendor_volc,
                 AsrVendorDisplayTag.Online,
@@ -232,7 +238,8 @@ class AsrVendorRegistryTest {
             AsrVendor.OpenAI,
             AsrVendor.DashScope,
             AsrVendor.Soniox,
-            AsrVendor.XAsr
+            AsrVendor.XAsr,
+            AsrVendor.Tencent
         )
         val pseudoStreaming = setOf(AsrVendor.SenseVoice, AsrVendor.FireRedAsr)
         val local = setOf(
@@ -275,7 +282,7 @@ class AsrVendorRegistryTest {
             )
             assertEquals(
                 "file capability for ${descriptor.vendor}",
-                descriptor.vendor != AsrVendor.XAsr,
+                descriptor.vendor !in setOf(AsrVendor.XAsr, AsrVendor.Tencent),
                 AsrVendorCapability.FileRecognition in capabilities
             )
             assertTrue(
@@ -368,6 +375,7 @@ class AsrVendorRegistryTest {
     @Test
     fun legacyIdLookupMatchesCurrentVendorParserAliases() {
         val aliases = mapOf(
+            "tencent" to AsrVendor.Tencent,
             "volc" to AsrVendor.Volc,
             "siliconflow" to AsrVendor.SiliconFlow,
             "elevenlabs" to AsrVendor.ElevenLabs,

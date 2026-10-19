@@ -1,13 +1,11 @@
 name: Release on Version Bump
 
+permissions:
+  contents: read
+
 on:
+  # Fork CI runs on all pushes; the release job keeps its original branch scope.
   push:
-    branches: ["main", "master"]
-    paths:
-      - "app/build.gradle"
-      - "app/build.gradle.kts"
-      - "gradle.properties"
-      - "app/src/main/AndroidManifest.xml"
   workflow_dispatch:
     inputs:
       force_release:
@@ -15,12 +13,199 @@ on:
         type: boolean
         default: false
 
-concurrency:
-  group: release-on-version-bump
-  cancel-in-progress: false
-
 jobs:
+  debug:
+    if: ${{ github.repository == 'Langingsing/BiBi-Keyboard' }}
+    permissions:
+      contents: read
+    concurrency:
+      group: android-debug-ci-${{ github.ref }}
+      cancel-in-progress: true
+    name: Lint, full unit tests, and arm64 debug APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Java 21
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle and validate wrapper
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-provider: basic
+          validate-wrappers: true
+          dependency-graph: disabled
+          build-scan-publish: false
+
+      - name: Prepare Android SDK 37
+        id: prepare
+        timeout-minutes: 10
+        run: |
+          # GitHub's Ubuntu image already includes sdkmanager and Android licenses.
+          # API 37 is published as android-37.0; AGP 9.2 defaults to Build Tools 36.0.0.
+          "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" \
+            "platform-tools" "platforms;android-37.0" "build-tools;36.0.0" < /dev/null
+          test -f "${ANDROID_HOME}/platforms/android-37.0/android.jar"
+          test -x "${ANDROID_HOME}/build-tools/36.0.0/apksigner"
+          test -x ./gradlew
+
+      - name: Check main and test Kotlin style
+        id: lint
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        timeout-minutes: 15
+        run: |
+          unset SF_FREE_API_KEY POCKETBASE_BASE_URL KEYSTORE_FILE KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
+          ./gradlew --no-daemon --console=plain --stacktrace --max-workers=2 \
+            :app:ktlintMainSourceSetCheck :app:ktlintTestSourceSetCheck
+
+      - name: Fetch pinned Chinese-ITN reference fixture
+        id: fixture
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        timeout-minutes: 3
+        run: |
+          # Keep this third-party corpus in the ignored references directory; do not redistribute it.
+          mkdir -p references/OSS/Chinese-ITN
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 90 \
+            --output references/OSS/Chinese-ITN/test_cases.txt \
+            https://raw.githubusercontent.com/HaujetZhao/Chinese-ITN/7c5cc3d46491bdaff612d97cd7b2b395a62c98e4/test_cases.txt
+          echo "1ae6dd7f6e12a41ab3f5c9b39d8a35af725489d896c67de7c9ad85d841bb29bd  references/OSS/Chinese-ITN/test_cases.txt" | sha256sum --check --strict
+
+      - name: Run the complete debug unit test suite
+        id: tests
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' && steps.fixture.outcome == 'success' }}
+        timeout-minutes: 25
+        run: |
+          unset SF_FREE_API_KEY POCKETBASE_BASE_URL KEYSTORE_FILE KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
+          ./gradlew --no-daemon --console=plain --stacktrace --max-workers=2 :app:testDebugUnitTest
+
+      # A failing check still fails the job. Assembly remains independent so the
+      # downloadable APK can be tested without masking the full-suite result.
+      - name: Assemble arm64 debug APK
+        id: assemble
+        if: ${{ !cancelled() && steps.prepare.outcome == 'success' }}
+        timeout-minutes: 20
+        run: |
+          unset SF_FREE_API_KEY POCKETBASE_BASE_URL KEYSTORE_FILE KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
+          ./gradlew --no-daemon --console=plain --stacktrace --max-workers=2 \
+            :app:assembleDebug -PabiFilters=arm64-v8a
+
+      - name: Verify and package APK with checksum
+        id: package
+        if: ${{ !cancelled() && steps.assemble.outcome == 'success' }}
+        run: |
+          apk=app/build/outputs/apk/debug/app-debug.apk
+          test -s "$apk"
+          "${ANDROID_HOME}/build-tools/36.0.0/apksigner" verify --verbose "$apk"
+          python3 - <<'PY'
+          from zipfile import ZipFile
+
+          with ZipFile("app/build/outputs/apk/debug/app-debug.apk") as apk:
+              abis = {name.split("/")[1] for name in apk.namelist()
+                      if name.startswith("lib/") and name.endswith(".so")}
+          if abis != {"arm64-v8a"}:
+              raise SystemExit(f"Unexpected APK native ABIs: {sorted(abis)}")
+          PY
+          mkdir -p ci-artifacts
+          filename="BiBi-Keyboard-debug-arm64-v8a-${GITHUB_SHA:0:12}.apk"
+          cp "$apk" "ci-artifacts/$filename"
+          (
+            cd ci-artifacts
+            sha256sum "$filename" > SHA256SUMS
+            sha256sum --check --strict SHA256SUMS
+          )
+          printf 'Commit: %s\nRun: %s/%s/actions/runs/%s\nVariant: debug\nABI: arm64-v8a\nSigning: ephemeral Android debug key\n' \
+            "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" \
+            > ci-artifacts/build-info.txt
+
+      - name: Upload debug APK and SHA-256 checksum
+        id: apk
+        if: ${{ !cancelled() && steps.package.outcome == 'success' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: BiBi-Keyboard-debug-arm64-v8a-${{ github.sha }}-${{ github.run_attempt }}
+          path: ci-artifacts/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+
+      - name: Upload full test and lint reports
+        id: reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: Android-debug-reports-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            app/build/test-results/testDebugUnitTest/*.xml
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/reports/ktlint/
+            build/reports/problems/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Summarize checks and downloads
+        if: ${{ always() }}
+        env:
+          LINT_OUTCOME: ${{ steps.lint.outcome }}
+          FIXTURE_OUTCOME: ${{ steps.fixture.outcome }}
+          TEST_OUTCOME: ${{ steps.tests.outcome }}
+          ASSEMBLE_OUTCOME: ${{ steps.assemble.outcome }}
+          APK_URL: ${{ steps.apk.outputs.artifact-url }}
+          REPORTS_URL: ${{ steps.reports.outputs.artifact-url }}
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          lines = ["## Android debug CI", "", f"Commit: `{os.environ['GITHUB_SHA']}`", ""]
+          for label, key in [("Kotlin style", "LINT_OUTCOME"), ("Pinned ITN fixture", "FIXTURE_OUTCOME"),
+                             ("Full unit suite", "TEST_OUTCOME"), ("APK assembly", "ASSEMBLE_OUTCOME")]:
+              lines.append(f"- {label}: **{os.environ.get(key) or 'not run'}**")
+          suites = [ET.parse(path).getroot() for path in sorted(
+              Path("app/build/test-results/testDebugUnitTest").glob("TEST-*.xml"))]
+          for label, selected in [("All unit tests", suites),
+                                  ("Tencent-specific suites (from the same full run)",
+                                   [s for s in suites if "Tencent" in s.get("name", "")])]:
+              if selected:
+                  totals = {key: sum(int(s.get(key, "0")) for s in selected)
+                            for key in ("tests", "failures", "errors", "skipped")}
+                  lines.append(f"- {label}: " + ", ".join(f"{value} {key}" for key, value in totals.items()))
+              else:
+                  lines.append(f"- {label}: no XML reports generated")
+          failed = [s.get("name", "unknown") for s in suites
+                    if int(s.get("failures", "0")) or int(s.get("errors", "0"))]
+          if failed:
+              lines += ["", "Failing suites:"] + [f"- `{name}`" for name in failed]
+              lines += ["", "See CI.md for the known baseline Chinese-ITN mismatch. Any failure keeps this run red."]
+          for label, key in [("Download arm64 debug APK and checksum", "APK_URL"),
+                             ("Download full test and lint reports", "REPORTS_URL")]:
+              if os.environ.get(key):
+                  lines += ["", f"[{label}]({os.environ[key]})"]
+          lines += ["", "APK availability does not mean all checks passed. Artifacts expire after 14 days.",
+                    "Fresh runners use a new debug signing key; back up settings before replacing an existing installation."]
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("\n".join(lines) + "\n")
+          PY
+
   release:
+    # Keep publishing in the upstream repository only, never in the fork's CI.
+    if: >-
+      ${{ github.repository == 'BryceWG/BiBi-Keyboard' &&
+          (github.event_name == 'workflow_dispatch' ||
+           github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') }}
+    concurrency:
+      group: release-on-version-bump
+      cancel-in-progress: false
     name: Build and Release
     runs-on: ubuntu-latest
     permissions:

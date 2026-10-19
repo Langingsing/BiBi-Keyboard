@@ -1,0 +1,11 @@
+<resources>
+    <string name="vendor_tencent">腾讯云</string>
+    <string name="label_tencent_app_id">腾讯云 AppID</string>
+    <string name="label_tencent_secret_id">腾讯云 SecretId</string>
+    <string name="label_tencent_secret_key">腾讯云 SecretKey</string>
+    <string name="label_tencent_engine_model_type">实时识别引擎（engine_model_type）</string>
+    <string name="error_missing_tencent_credentials">请先在语音识别设置中填写您自己的腾讯云 AppID、SecretId 和 SecretKey。</string>
+    <string name="error_tencent_engine_model_type">未保存此模型。仅支持以 16k_ 开头的引擎，继续使用上次有效的模型。</string>
+    <string name="tencent_engine_model_help">默认：16k_zh（普通话）。示例：16k_en（英语）、16k_yue（粤语）、16k_zh-TW（繁体中文）。录音采样率为 16 kHz，因此仅支持 16k_ 引擎。留空则使用默认模型。</string>
+    <string name="tencent_configuration_help">请先开通腾讯云语音识别服务，再填写您自己的 AppID、SecretId 和 SecretKey。本应用不内置腾讯云凭据。识别期间音频会发送至腾讯云，实时语音识别用量按腾讯云当前价格向您的腾讯云账户计费。凭据保存在本机，并包含在导出的设置备份中，请妥善保管备份文件。</string>
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="vendor_tencent">Tencent Cloud</string>
+    <string name="label_tencent_app_id">Tencent Cloud AppID</string>
+    <string name="label_tencent_secret_id">Tencent Cloud SecretId</string>
+    <string name="label_tencent_secret_key">Tencent Cloud SecretKey</string>
+    <string name="label_tencent_engine_model_type">Realtime engine model (engine_model_type)</string>
+    <string name="error_missing_tencent_credentials">Enter your Tencent Cloud AppID, SecretId and SecretKey in speech recognition settings first.</string>
+    <string name="error_tencent_engine_model_type">This model was not saved. Only 16k_ engine models are supported; the last valid model remains active.</string>
+    <string name="tencent_engine_model_help">Default: 16k_zh (Mandarin). Examples: 16k_en (English), 16k_yue (Cantonese), 16k_zh-TW (Traditional Chinese). Only 16k_ models are supported because audio is recorded at 16 kHz. Leave blank to use the default.</string>
+    <string name="tencent_configuration_help">Enable Tencent Cloud ASR and enter your own AppID, SecretId and SecretKey. No Tencent credentials are embedded in this app. Audio is sent to Tencent Cloud during recognition, and realtime ASR usage is billed to your Tencent Cloud account under its current pricing. Credentials are stored locally and included in exported settings backups; keep those files private.</string>
+</resources>

@@ -1,0 +1,11 @@
+<resources>
+    <string name="vendor_tencent">騰訊雲</string>
+    <string name="label_tencent_app_id">騰訊雲 AppID</string>
+    <string name="label_tencent_secret_id">騰訊雲 SecretId</string>
+    <string name="label_tencent_secret_key">騰訊雲 SecretKey</string>
+    <string name="label_tencent_engine_model_type">即時辨識引擎（engine_model_type）</string>
+    <string name="error_missing_tencent_credentials">請先在語音辨識設定中填寫您自己的騰訊雲 AppID、SecretId 和 SecretKey。</string>
+    <string name="error_tencent_engine_model_type">未儲存此模型。僅支援以 16k_ 開頭的引擎，繼續使用上次有效的模型。</string>
+    <string name="tencent_engine_model_help">預設：16k_zh（普通話）。範例：16k_en（英語）、16k_yue（粵語）、16k_zh-TW（繁體中文）。錄音取樣率為 16 kHz，因此僅支援 16k_ 引擎。留空則使用預設模型。</string>
+    <string name="tencent_configuration_help">請先開通騰訊雲語音辨識服務，再填寫您自己的 AppID、SecretId 和 SecretKey。本應用程式不內建騰訊雲憑證。辨識期間音訊會傳送至騰訊雲，即時語音辨識用量依騰訊雲目前價格向您的騰訊雲帳戶計費。憑證儲存在本機，並包含於匯出的設定備份中，請妥善保管備份檔案。</string>
+</resources>

@@ -254,6 +254,7 @@ private fun resolveOnlineAsrVendor(rawId: String): AsrVendor? = when (rawId.trim
     "openrouter", "open_router" -> AsrVendor.OpenRouter
     "dashscope" -> AsrVendor.DashScope
     "gemini" -> AsrVendor.Gemini
+    "tencent", "tencentcloud", "tencent_cloud" -> AsrVendor.Tencent
     "soniox" -> AsrVendor.Soniox
     "stepaudio", "step_audio", "stepfun" -> AsrVendor.StepAudio
     "zhipu" -> AsrVendor.Zhipu

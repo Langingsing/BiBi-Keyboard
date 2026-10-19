@@ -27,6 +27,10 @@ import com.brycewg.asrkb.store.KEY_GEM_TRANSCRIBE_MODEL
 import com.brycewg.asrkb.store.KEY_OPENROUTER_ASR_API_KEY
 import com.brycewg.asrkb.store.KEY_OPENROUTER_ASR_ENDPOINT
 import com.brycewg.asrkb.store.KEY_OPENROUTER_ASR_MODEL
+import com.brycewg.asrkb.store.KEY_TENCENT_APP_ID
+import com.brycewg.asrkb.store.KEY_TENCENT_ENGINE_MODEL_TYPE
+import com.brycewg.asrkb.store.KEY_TENCENT_SECRET_ID
+import com.brycewg.asrkb.store.KEY_TENCENT_SECRET_KEY
 import com.brycewg.asrkb.store.Prefs
 import com.brycewg.asrkb.store.VendorFieldRole
 import com.brycewg.asrkb.store.isOpenAiCustomTranscriptionsEndpoint
@@ -153,6 +157,14 @@ internal fun CurrentAsrVendorConfig(
     onOpenAiPromptChange: (String) -> Unit,
     openAiLanguage: String,
     onOpenAiLanguageChange: (String) -> Unit,
+    tencentAppId: String,
+    onTencentAppIdChange: (String) -> Unit,
+    tencentSecretId: String,
+    onTencentSecretIdChange: (String) -> Unit,
+    tencentSecretKey: String,
+    onTencentSecretKeyChange: (String) -> Unit,
+    tencentEngineModelType: String,
+    onTencentEngineModelTypeChange: (String) -> Unit,
     sonioxApiKey: String,
     onSonioxApiKeyChange: (String) -> Unit,
     sonioxStreaming: Boolean,
@@ -678,6 +690,39 @@ internal fun CurrentAsrVendorConfig(
             )
         }
 
+        AsrVendor.Tencent -> {
+            val itemCount = primaryGroupCount ?: 5
+            val nextIndex = CommonOnlineAsrTextFields(
+                uiMode = uiMode,
+                fields = tencentCommonTextFields(
+                    appId = tencentAppId,
+                    onAppIdChange = onTencentAppIdChange,
+                    secretId = tencentSecretId,
+                    onSecretIdChange = onTencentSecretIdChange,
+                    secretKey = tencentSecretKey,
+                    onSecretKeyChange = onTencentSecretKeyChange,
+                    engineModelType = tencentEngineModelType,
+                    onEngineModelTypeChange = onTencentEngineModelTypeChange
+                ),
+                startIndex = primaryIndexOffset,
+                count = itemCount
+            )
+            AsrActionPreference(
+                id = "tencent_get_key_guide",
+                titleRes = R.string.btn_get_api_key_guide,
+                index = nextIndex,
+                count = itemCount,
+                onClick = { onOpenGuide(TENCENT_ASR_GUIDE_URL) }
+            )
+            if (tencentEngineModelType.isNotBlank() &&
+                !Prefs.isTencentEngineModelTypeSupported(tencentEngineModelType)
+            ) {
+                AsrBodyText(uiMode = uiMode, textRes = R.string.error_tencent_engine_model_type)
+            }
+            AsrBodyText(uiMode = uiMode, textRes = R.string.tencent_engine_model_help)
+            AsrBodyText(uiMode = uiMode, textRes = R.string.tencent_configuration_help)
+        }
+
         AsrVendor.Soniox -> {
             SonioxAsrConfig(
                 uiMode = uiMode,
@@ -772,6 +817,48 @@ internal fun commonOnlineAsrTextRows(
         count = count
     )
 }
+
+internal fun tencentCommonTextFields(
+    appId: String,
+    onAppIdChange: (String) -> Unit,
+    secretId: String,
+    onSecretIdChange: (String) -> Unit,
+    secretKey: String,
+    onSecretKeyChange: (String) -> Unit,
+    engineModelType: String,
+    onEngineModelTypeChange: (String) -> Unit
+): List<OnlineAsrTextFieldSpec> = listOf(
+    OnlineAsrTextFieldSpec(
+        key = KEY_TENCENT_APP_ID,
+        role = VendorFieldRole.Credential,
+        labelRes = R.string.label_tencent_app_id,
+        value = appId,
+        onValueChange = onAppIdChange
+    ),
+    OnlineAsrTextFieldSpec(
+        key = KEY_TENCENT_SECRET_ID,
+        role = VendorFieldRole.Credential,
+        labelRes = R.string.label_tencent_secret_id,
+        value = secretId,
+        onValueChange = onSecretIdChange,
+        password = true
+    ),
+    OnlineAsrTextFieldSpec(
+        key = KEY_TENCENT_SECRET_KEY,
+        role = VendorFieldRole.Credential,
+        labelRes = R.string.label_tencent_secret_key,
+        value = secretKey,
+        onValueChange = onSecretKeyChange,
+        password = true
+    ),
+    OnlineAsrTextFieldSpec(
+        key = KEY_TENCENT_ENGINE_MODEL_TYPE,
+        role = VendorFieldRole.Model,
+        labelRes = R.string.label_tencent_engine_model_type,
+        value = engineModelType,
+        onValueChange = onEngineModelTypeChange
+    )
+)
 
 internal fun geminiCommonTextFields(
     apiKey: String,
@@ -1152,6 +1239,7 @@ internal fun currentOnlineAsrPrimaryItemCount(
         openAiUsePrompt,
         openAiUseCompletions
     )
+    AsrVendor.Tencent -> 5
     AsrVendor.Soniox -> 6
     else -> 0
 }
@@ -1298,6 +1386,9 @@ internal data class OnlineVendorChoice(
 
 private const val OPENAI_ASR_GUIDE_URL =
     "https://bibidocs.brycewg.com/getting-started/asr-providers.html#openai-%E5%85%BC%E5%AE%B9%E6%8E%A5%E5%8F%A3"
+private const val TENCENT_ASR_GUIDE_URL =
+    "https://cloud.tencent.com/document/product/1093/48982"
+
 private const val SONIOX_ASR_GUIDE_URL =
     "https://bibidocs.brycewg.com/getting-started/asr-providers.html#soniox"
 private const val GEMINI_ASR_GUIDE_URL =

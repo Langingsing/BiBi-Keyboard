@@ -66,6 +66,7 @@ internal enum class AsrDirectMicrophoneEngineConstructorKey(
     val family: AsrDirectMicrophoneEngineFamily
 ) {
     FileRecognizer("SharedFileRecognizer", AsrDirectMicrophoneEngineFamily.File),
+    TencentStream("TencentStreamAsrEngine", AsrDirectMicrophoneEngineFamily.Stream),
     VolcStream("VolcStreamAsrEngine", AsrDirectMicrophoneEngineFamily.Stream),
     ElevenLabsStream("ElevenLabsStreamAsrEngine", AsrDirectMicrophoneEngineFamily.Stream),
     OpenAiRealtime("OpenAiRealtimeAsrEngine", AsrDirectMicrophoneEngineFamily.Stream),
@@ -193,6 +194,7 @@ internal class AsrDirectMicrophoneEngineFactory(
     private fun streamConstructorKeyFor(
         vendor: AsrVendor
     ): AsrDirectMicrophoneEngineConstructorKey = when (vendor) {
+        AsrVendor.Tencent -> AsrDirectMicrophoneEngineConstructorKey.TencentStream
         AsrVendor.Volc -> AsrDirectMicrophoneEngineConstructorKey.VolcStream
         AsrVendor.ElevenLabs -> AsrDirectMicrophoneEngineConstructorKey.ElevenLabsStream
         AsrVendor.OpenAI -> AsrDirectMicrophoneEngineConstructorKey.OpenAiRealtime
@@ -267,6 +269,8 @@ internal object RealAsrDirectMicrophoneEngineConstructorTable : AsrDirectMicroph
                 plan.fileRecognizerKey ?: error("Direct file construction requires a file recognizer key"),
                 request.toFileRecognizerRequest()
             )
+        AsrDirectMicrophoneEngineConstructorKey.TencentStream ->
+            TencentStreamAsrEngine(request.context, request.scope, request.prefs, request.listener)
         AsrDirectMicrophoneEngineConstructorKey.VolcStream ->
             VolcStreamAsrEngine(request.context, request.scope, request.prefs, request.listener)
         AsrDirectMicrophoneEngineConstructorKey.ElevenLabsStream ->

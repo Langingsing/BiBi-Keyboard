@@ -70,7 +70,7 @@ internal fun fileRecognizerKeyFor(
     AsrVendor.Qwen3Asr -> AsrFileRecognizerKey.Qwen3AsrFile
     AsrVendor.Parakeet -> AsrFileRecognizerKey.ParakeetFile
     AsrVendor.FireRedAsr -> AsrFileRecognizerKey.FireRedAsrFile
-    AsrVendor.XAsr -> error("X-ASR has no file recognizer")
+    AsrVendor.XAsr, AsrVendor.Tencent -> error("${resolution.vendor} has no file recognizer")
 }
 
 internal fun interface AsrFileRecognizerConstructorTable {

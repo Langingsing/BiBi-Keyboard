@@ -47,7 +47,8 @@ English | [简体中文](README.md)
 - **Press & Hold Recording** - Simple and intuitive recording
 - **Smart Auto-Stop** - Automatically stops recording on silence
 - **Fast Recognition** - Release to upload, quick results
-- **Multi-Engine Support** - 18 ASR vendors (12 cloud + 6 local)
+- **Multi-Engine Support** - 19 ASR vendors (13 cloud + 6 local)
+- **Tencent Cloud Realtime ASR** - Configurable AppID / SecretId / SecretKey with streaming recognition; [setup notes](TENCENT_ASR.md)
 - **Local ASR Models** - SenseVoice / FunASR Nano / Qwen3-ASR / Parakeet / FireRedASR / X-ASR for offline use
 - **Primary + Backup** - Backup engines and local backup residency for unstable networks
 - **AI Text Polish** - LLM polish; history can cache audio and re-run recognition or polish
@@ -138,6 +139,12 @@ If you are interested in BiBi Keyboard, join our [Telegram Group](https://t.me/+
    - Long press the microphone button to start voice input
 
 > 💡 **Tip**: First-time users are recommended to configure Volcengine for 20 hours of free quota!
+
+### CI and Debug APKs
+
+This fork reuses the existing [Release on Version Bump workflow](.github/workflows/release-on-version-bump.yml) to check, test, and upload an arm64 debug APK on pushes or manual runs, without publishing releases. See [CI.md](CI.md) for downloads and installation.
+
+The complete suite retains a pre-existing Chinese-ITN corpus failure: locally, 681/682 tests pass, with 23/328 reference cases mismatching in one test; all 42 Tencent-specific tests pass. A failed test keeps CI red while APK assembly runs independently. An available APK does not mean every check passed.
 
 ### 🎨 Tech Stack
 

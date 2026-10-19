@@ -101,6 +101,10 @@ internal class AsrOnlineSettingsFields(
     var openAiUsePrompt by mutableStateOf(prefs.oaAsrUsePrompt)
     var openAiPrompt by mutableStateOf(prefs.oaAsrPrompt)
     var openAiLanguage by mutableStateOf(prefs.oaAsrLanguage)
+    var tencentAppId by mutableStateOf(prefs.tencentAppId)
+    var tencentSecretId by mutableStateOf(prefs.tencentSecretId)
+    var tencentSecretKey by mutableStateOf(prefs.tencentSecretKey)
+    var tencentEngineModelType by mutableStateOf(prefs.tencentEngineModelType)
     var sonioxApiKey by mutableStateOf(prefs.sonioxApiKey)
     var sonioxStreaming by mutableStateOf(prefs.sonioxStreamingEnabled)
     var sonioxEndpointSensitivityLevel by mutableStateOf(prefs.sonioxEndpointSensitivityLevel)
@@ -168,6 +172,10 @@ internal class AsrOnlineSettingsFields(
         mimoModel = prefs.mimoAsrModel
         mimoDisableThinking = prefs.mimoAsrDisableThinking
         refreshOpenAiFromPrefs()
+        tencentAppId = prefs.tencentAppId
+        tencentSecretId = prefs.tencentSecretId
+        tencentSecretKey = prefs.tencentSecretKey
+        tencentEngineModelType = prefs.tencentEngineModelType
         sonioxApiKey = prefs.sonioxApiKey
         sonioxStreaming = prefs.sonioxStreamingEnabled
         sonioxEndpointSensitivityLevel = prefs.sonioxEndpointSensitivityLevel
@@ -198,6 +206,13 @@ internal class AsrOnlineSettingsFields(
         openAiUsePrompt = prefs.oaAsrUsePrompt
         openAiPrompt = prefs.oaAsrPrompt
         openAiLanguage = prefs.oaAsrLanguage
+    }
+
+    fun updateTencentEngineModelType(value: String) {
+        tencentEngineModelType = value
+        if (value.isBlank() || Prefs.isTencentEngineModelTypeSupported(value)) {
+            prefs.tencentEngineModelType = value
+        }
     }
 
     fun showCohereCustomModelInput() {
@@ -617,6 +632,23 @@ internal class AsrOnlineSettingsFields(
             openAiLanguage = value
             prefs.oaAsrLanguage = value
         },
+        tencentAppId = tencentAppId,
+        onTencentAppIdChange = { value ->
+            tencentAppId = value
+            prefs.tencentAppId = value
+        },
+        tencentSecretId = tencentSecretId,
+        onTencentSecretIdChange = { value ->
+            tencentSecretId = value
+            prefs.tencentSecretId = value
+        },
+        tencentSecretKey = tencentSecretKey,
+        onTencentSecretKeyChange = { value ->
+            tencentSecretKey = value
+            prefs.tencentSecretKey = value
+        },
+        tencentEngineModelType = tencentEngineModelType,
+        onTencentEngineModelTypeChange = ::updateTencentEngineModelType,
         sonioxApiKey = sonioxApiKey,
         onSonioxApiKeyChange = { value ->
             sonioxApiKey = value

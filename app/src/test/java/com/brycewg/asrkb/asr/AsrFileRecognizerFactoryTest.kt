@@ -117,6 +117,7 @@ class AsrFileRecognizerFactoryTest {
             AsrVendor.Soniox to AsrEngineModePreferences(sonioxStreamingEnabled = true),
             AsrVendor.SenseVoice to AsrEngineModePreferences(senseVoicePseudoStreamEnabled = true),
             AsrVendor.FireRedAsr to AsrEngineModePreferences(fireRedPseudoStreamEnabled = true),
+            AsrVendor.Tencent to AsrEngineModePreferences(),
             AsrVendor.XAsr to AsrEngineModePreferences()
         )
 
@@ -250,6 +251,7 @@ class AsrFileRecognizerFactoryTest {
                 AsrEngineModePreferences(fireRedPseudoStreamEnabled = true),
                 CurrentAsrConstructionSettings(pseudoStreamEnabled = true)
             ),
+            streamingCase(AsrVendor.Tencent, AsrEngineModePreferences()),
             streamingCase(AsrVendor.XAsr, AsrEngineModePreferences())
         )
 

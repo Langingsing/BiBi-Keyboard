@@ -69,6 +69,20 @@ internal enum class AsrVendorLifecycleLink {
 internal object AsrVendorRegistry {
     val descriptors: List<AsrVendorDescriptor> = listOf(
         descriptor(
+            vendor = AsrVendor.Tencent,
+            displayNameResId = R.string.vendor_tencent,
+            pickerOrder = 18,
+            tags = listOf(
+                AsrVendorDisplayTag.Online,
+                AsrVendorDisplayTag.Streaming
+            ),
+            capabilities = setOf(
+                AsrVendorCapability.StreamingRecognition,
+                AsrVendorCapability.NativePushPcmInput,
+                AsrVendorCapability.BackupCandidate
+            )
+        ),
+        descriptor(
             vendor = AsrVendor.SiliconFlow,
             displayNameResId = R.string.vendor_sf,
             pickerOrder = 0,

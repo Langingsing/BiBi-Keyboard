@@ -19,6 +19,35 @@ import org.junit.Test
 
 class OnlineAsrTextFieldSchemaTest {
     @Test
+    fun tencentFieldsMaskSecretsAndKeepTheEditableModelDraft() {
+        var changedModel = ""
+        val fields = tencentCommonTextFields(
+            appId = "123456",
+            onAppIdChange = {},
+            secretId = "test-id",
+            onSecretIdChange = {},
+            secretKey = "test-key",
+            onSecretKeyChange = {},
+            engineModelType = "",
+            onEngineModelTypeChange = { changedModel = it }
+        )
+        val rows = commonOnlineAsrTextRows(fields, startIndex = 1, count = 6)
+        assertEquals(listOf(false, true, true, false), rows.map { it.password })
+        assertEquals(listOf(1, 2, 3, 4), rows.map { it.index })
+        assertEquals("", rows.last().value)
+        assertEquals(
+            listOf(VendorFieldRole.Credential, VendorFieldRole.Credential, VendorFieldRole.Credential, VendorFieldRole.Model),
+            rows.map { it.role }
+        )
+        rows.last().onValueChange("16k_zh-TW")
+        assertEquals("16k_zh-TW", changedModel)
+        assertEquals(
+            rows.size + 1,
+            currentOnlineAsrPrimaryItemCount(AsrVendor.Tencent, emptyList(), false)
+        )
+    }
+
+    @Test
     fun geminiCommonFieldsMapToTextRowsWithoutOwningSpecialItems() {
         var changedModel = ""
         val fields = geminiCommonTextFields(

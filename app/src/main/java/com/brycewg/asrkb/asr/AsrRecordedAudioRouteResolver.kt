@@ -53,18 +53,33 @@ internal object AsrRecordedAudioRouteResolver {
         prefs: Prefs,
         vendor: AsrVendor = prefs.asrVendor
     ): AsrRecordedAudioRouteDecision {
-        val backupPolicy = resolveBackupAsrDecision(
-            context = context,
-            prefs = prefs,
-            primaryVendor = vendor,
-            backupVendor = prefs.backupAsrVendor
-        )
+        // History replays the complete PCM file without realtime pacing. Tencent is
+        // streaming-only and must not receive that burst even as another vendor's backup.
+        val backupPolicy = if (prefs.backupAsrVendor == AsrVendor.Tencent) {
+            AsrBackupPolicyDecision.UsePrimaryOnly
+        } else {
+            resolveBackupAsrDecision(
+                context = context,
+                prefs = prefs,
+                primaryVendor = vendor,
+                backupVendor = prefs.backupAsrVendor
+            )
+        }
         val snapshot = prefs.asrEngineModePreferencesSnapshot()
         val decision = when (vendor) {
             AsrVendor.Volc -> resolveVolc(context, prefs, snapshot, backupPolicy)
             AsrVendor.DashScope -> resolveDash(context, prefs, snapshot, backupPolicy)
             AsrVendor.OpenAI -> resolveOpenAi(context, prefs, snapshot, backupPolicy)
             AsrVendor.XAsr -> resolveXAsr(context, snapshot, backupPolicy)
+            AsrVendor.Tencent -> unsupported(
+                vendor = vendor,
+                reasonCode = REASON_UNSUPPORTED_NO_FILE_FALLBACK,
+                noticeKey = NOTICE_UNSUPPORTED_NO_FILE_FALLBACK,
+                currentModelKey = prefs.tencentEngineModelType,
+                currentEngineLabel = vendorLabel(context, vendor),
+                snapshot = snapshot,
+                backupPolicy = backupPolicy
+            )
             else -> resolveGenericFile(context, vendor, snapshot, backupPolicy)
         }
         if (decision.canContinue && !isAsrVendorConfigured(context, prefs, vendor)) {

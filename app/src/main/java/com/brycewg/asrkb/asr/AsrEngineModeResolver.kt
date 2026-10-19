@@ -199,7 +199,7 @@ internal object AsrEngineModeResolver {
         AsrVendor.OpenAI -> openAiStreamingEnabled
         AsrVendor.DashScope -> dashScopeStreamingEnabled
         AsrVendor.Soniox -> sonioxStreamingEnabled
-        AsrVendor.XAsr -> true
+        AsrVendor.XAsr, AsrVendor.Tencent -> true
         else -> false
     }
 

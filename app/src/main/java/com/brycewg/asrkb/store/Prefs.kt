@@ -124,7 +124,12 @@ class Prefs(context: Context) {
     internal fun getPrefString(key: String, default: String = ""): String = sp.getString(key, default) ?: default
 
     internal fun setPrefString(key: String, value: String) {
-        sp.edit { putString(key, value.trim()) }
+        val normalized = if (key == KEY_TENCENT_ENGINE_MODEL_TYPE) {
+            normalizeTencentEngineModelType(value)
+        } else {
+            value.trim()
+        }
+        sp.edit { putString(key, normalized) }
     }
 
     internal fun getPrefBoolean(key: String, default: Boolean): Boolean = sp.getBoolean(key, default)
@@ -1488,6 +1493,17 @@ class Prefs(context: Context) {
         get() = sp.getBoolean(KEY_GEM_TRANSCRIBE_SMART_ENABLED, false)
         set(value) = sp.edit { putBoolean(KEY_GEM_TRANSCRIBE_SMART_ENABLED, value) }
 
+    // 腾讯云实时语音识别。凭据由用户自行填写，不包含内置密钥。
+    var tencentAppId: String by stringPref(KEY_TENCENT_APP_ID, "")
+    var tencentSecretId: String by stringPref(KEY_TENCENT_SECRET_ID, "")
+    var tencentSecretKey: String by stringPref(KEY_TENCENT_SECRET_KEY, "")
+
+    var tencentEngineModelType: String
+        get() = normalizeTencentEngineModelType(
+            sp.getString(KEY_TENCENT_ENGINE_MODEL_TYPE, DEFAULT_TENCENT_ENGINE_MODEL_TYPE).orEmpty()
+        )
+        set(value) = setPrefString(KEY_TENCENT_ENGINE_MODEL_TYPE, value)
+
     // Soniox 语音识别
     var sonioxApiKey: String by stringPref(KEY_SONIOX_API_KEY, "")
 
@@ -1990,6 +2006,7 @@ class Prefs(context: Context) {
     fun hasOpenRouterKeys(): Boolean = hasVendorKeys(AsrVendor.OpenRouter)
     fun hasGeminiKeys(): Boolean = hasVendorKeys(AsrVendor.Gemini)
     fun hasMiMoKeys(): Boolean = hasVendorKeys(AsrVendor.MiMo)
+    fun hasTencentKeys(): Boolean = hasVendorKeys(AsrVendor.Tencent)
     fun hasSonioxKeys(): Boolean = hasVendorKeys(AsrVendor.Soniox)
     fun hasStepAudioKeys(): Boolean = hasVendorKeys(AsrVendor.StepAudio)
     fun hasZhipuKeys(): Boolean = hasVendorKeys(AsrVendor.Zhipu)
@@ -2351,6 +2368,16 @@ class Prefs(context: Context) {
         const val TRIM_FINAL_TRAILING_PUNCT_THRESHOLD_MAX_FINITE = 99
         const val TRIM_FINAL_TRAILING_PUNCT_THRESHOLD_UNLIMITED = 100
         const val DEFAULT_TRIM_FINAL_TRAILING_PUNCT_THRESHOLD = TRIM_FINAL_TRAILING_PUNCT_THRESHOLD_UNLIMITED
+
+        const val DEFAULT_TENCENT_ENGINE_MODEL_TYPE = "16k_zh"
+        private val TENCENT_ENGINE_MODEL_PATTERN = Regex("16k_[A-Za-z0-9_.-]+")
+
+        // The realtime engine always captures 16 kHz audio; 8 kHz models are incompatible.
+        fun isTencentEngineModelTypeSupported(value: String): Boolean = TENCENT_ENGINE_MODEL_PATTERN.matches(value.trim())
+
+        fun normalizeTencentEngineModelType(value: String): String = value.trim()
+            .takeIf(::isTencentEngineModelTypeSupported)
+            ?: DEFAULT_TENCENT_ENGINE_MODEL_TYPE
 
         const val DEFAULT_ENDPOINT = "https://openspeech.bytedance.com/api/v3/auc/bigmodel/recognize/flash"
         const val SF_ENDPOINT = "https://api.siliconflow.cn/v1/audio/transcriptions"

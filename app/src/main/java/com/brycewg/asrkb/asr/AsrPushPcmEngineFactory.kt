@@ -56,6 +56,7 @@ internal enum class AsrPushPcmEngineConstructorKey(
     val family: AsrPushPcmEngineFamily
 ) {
     GenericFileAdapter("GenericPushFileAsrAdapter", AsrPushPcmEngineFamily.FileAdapter),
+    TencentStream("TencentStreamAsrEngine", AsrPushPcmEngineFamily.NativeStream),
     VolcStream("VolcStreamAsrEngine", AsrPushPcmEngineFamily.NativeStream),
     ElevenLabsStream("ElevenLabsStreamAsrEngine", AsrPushPcmEngineFamily.NativeStream),
     OpenAiRealtime("OpenAiRealtimeAsrEngine", AsrPushPcmEngineFamily.NativeStream),
@@ -200,6 +201,7 @@ internal class AsrPushPcmEngineFactory(
     private fun streamConstructorKeyFor(
         vendor: AsrVendor
     ): AsrPushPcmEngineConstructorKey = when (vendor) {
+        AsrVendor.Tencent -> AsrPushPcmEngineConstructorKey.TencentStream
         AsrVendor.Volc -> AsrPushPcmEngineConstructorKey.VolcStream
         AsrVendor.ElevenLabs -> AsrPushPcmEngineConstructorKey.ElevenLabsStream
         AsrVendor.OpenAI -> AsrPushPcmEngineConstructorKey.OpenAiRealtime
@@ -271,6 +273,8 @@ internal object RealAsrPushPcmEngineConstructorTable : AsrPushPcmEngineConstruct
     ): StreamingAsrEngine = when (plan.constructorKey) {
         AsrPushPcmEngineConstructorKey.GenericFileAdapter ->
             createFileAdapter(plan, request)
+        AsrPushPcmEngineConstructorKey.TencentStream ->
+            TencentStreamAsrEngine(request.context, request.scope, request.prefs, request.listener, externalPcmMode = true)
         AsrPushPcmEngineConstructorKey.VolcStream ->
             VolcStreamAsrEngine(request.context, request.scope, request.prefs, request.listener, externalPcmMode = true)
         AsrPushPcmEngineConstructorKey.ElevenLabsStream ->

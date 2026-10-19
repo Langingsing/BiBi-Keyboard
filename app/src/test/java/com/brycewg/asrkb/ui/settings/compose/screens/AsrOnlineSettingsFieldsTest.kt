@@ -25,6 +25,40 @@ class AsrOnlineSettingsFieldsTest {
     }
 
     @Test
+    fun tencentModelDraftRejectsIncompatibleModelsWithoutLosingLastValidValue() {
+        val fields = AsrOnlineSettingsFields(prefs)
+        assertEquals("16k_zh", fields.tencentEngineModelType)
+        fields.updateTencentEngineModelType("16k_zh-TW")
+        assertEquals("16k_zh-TW", prefs.tencentEngineModelType)
+
+        fields.updateTencentEngineModelType("8k_zh")
+        assertEquals("8k_zh", fields.tencentEngineModelType)
+        assertEquals("16k_zh-TW", prefs.tencentEngineModelType)
+
+        fields.refreshFromPrefs()
+        assertEquals("16k_zh-TW", fields.tencentEngineModelType)
+        fields.updateTencentEngineModelType("")
+        assertEquals("", fields.tencentEngineModelType)
+        assertEquals("16k_zh", prefs.tencentEngineModelType)
+    }
+
+    @Test
+    fun refreshReloadsAllTencentFieldsAfterSettingsImport() {
+        val fields = AsrOnlineSettingsFields(prefs)
+        prefs.tencentAppId = "123456"
+        prefs.tencentSecretId = "test-id"
+        prefs.tencentSecretKey = "test-key"
+        prefs.tencentEngineModelType = "16k_en"
+
+        fields.refreshFromPrefs()
+
+        assertEquals("123456", fields.tencentAppId)
+        assertEquals("test-id", fields.tencentSecretId)
+        assertEquals("test-key", fields.tencentSecretKey)
+        assertEquals("16k_en", fields.tencentEngineModelType)
+    }
+
+    @Test
     fun constructorNormalizesAndPersistsCohereLanguage() {
         prefs.cohereAsrModel = Prefs.COHERE_ARABIC_ASR_MODEL
         prefs.cohereAsrLanguage = "zh"

@@ -385,7 +385,7 @@ class AsrPushPcmEngineFactoryTest {
             AsrVendor.OpenAI -> openAiStreamingEnabled
             AsrVendor.DashScope -> dashScopeStreamingEnabled
             AsrVendor.Soniox -> sonioxStreamingEnabled
-            AsrVendor.XAsr -> true
+            AsrVendor.XAsr, AsrVendor.Tencent -> true
             else -> false
         },
         volcStandardFileEnabled = volcStandardFileEnabled,
@@ -417,6 +417,7 @@ class AsrPushPcmEngineFactoryTest {
         AsrVendor.OpenAI -> AsrEngineModePreferences(openAiStreamingEnabled = true)
         AsrVendor.DashScope -> AsrEngineModePreferences(dashScopeStreamingEnabled = true)
         AsrVendor.Soniox -> AsrEngineModePreferences(sonioxStreamingEnabled = true)
+        AsrVendor.Tencent -> AsrEngineModePreferences() // Streaming-only; no toggle is needed.
         else -> error("$vendor is not controlled by a streaming preference")
     }
 

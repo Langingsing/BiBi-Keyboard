@@ -45,6 +45,7 @@ class AsrConstructionBaselineTest {
             FireRedAsr[pseudoStream=false] | app=LocalFile:FireRedAsrFileAsrEngine | speech=LocalFile:FireRedAsrFileAsrEngine | external=LocalFile:FireRedAsrFileAsrEngine | externalPush=PushPcmAdapter:GenericPushFileAsrAdapter(FireRedAsrFileAsrEngine) | recordingPush=PushPcmAdapter:GenericPushFileAsrAdapter(FireRedAsrFileAsrEngine) | recordingMode=File | parallelDirect=PushPcmAdapter:GenericPushFileAsrAdapter(FireRedAsrFileAsrEngine) | parallelPush=PushPcmAdapter:GenericPushFileAsrAdapter(FireRedAsrFileAsrEngine)
             FireRedAsr[pseudoStream=true] | app=LocalPseudoStream:FireRedAsrPseudoStreamAsrEngine | speech=LocalPseudoStream:FireRedAsrPseudoStreamAsrEngine | external=LocalFile:FireRedAsrFileAsrEngine | externalPush=PushPcmPseudoStream:FireRedAsrPushPcmPseudoStreamAsrEngine | recordingPush=PushPcmPseudoStream:FireRedAsrPushPcmPseudoStreamAsrEngine | recordingMode=PushPcm | parallelDirect=PushPcmPseudoStream:FireRedAsrPushPcmPseudoStreamAsrEngine | parallelPush=PushPcmPseudoStream:FireRedAsrPushPcmPseudoStreamAsrEngine
             XAsr[alwaysStreaming] | app=Stream:XAsrStreamAsrEngine | speech=Stream:XAsrStreamAsrEngine | external=Stream:XAsrStreamAsrEngine | externalPush=PushPcmStream:XAsrStreamAsrEngine | recordingPush=PushPcmStream:XAsrStreamAsrEngine | recordingMode=PushPcm | parallelDirect=PushPcmStream:XAsrStreamAsrEngine | parallelPush=PushPcmStream:XAsrStreamAsrEngine
+            Tencent[alwaysStreaming] | app=Stream:TencentStreamAsrEngine | speech=Stream:TencentStreamAsrEngine | external=Stream:TencentStreamAsrEngine | externalPush=PushPcmStream:TencentStreamAsrEngine | recordingPush=PushPcmStream:TencentStreamAsrEngine | recordingMode=PushPcm | parallelDirect=PushPcmStream:TencentStreamAsrEngine | parallelPush=PushPcmStream:TencentStreamAsrEngine
         """.trimIndent()
 
         assertEquals(expected, renderGoldenMatrix())
@@ -538,6 +539,11 @@ class AsrConstructionBaselineTest {
             listOf(
                 BaselineRow(
                     AsrVendor.XAsr,
+                    "alwaysStreaming",
+                    CurrentAsrConstructionSettings(streamingEnabled = true)
+                ),
+                BaselineRow(
+                    AsrVendor.Tencent,
                     "alwaysStreaming",
                     CurrentAsrConstructionSettings(streamingEnabled = true)
                 )

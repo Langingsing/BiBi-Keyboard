@@ -143,6 +143,7 @@ internal object CurrentAsrConstructionBaseline {
         } else {
             localFile("FireRedAsrFileAsrEngine")
         }
+        AsrVendor.Tencent -> stream("TencentStreamAsrEngine")
         AsrVendor.XAsr -> stream("XAsrStreamAsrEngine")
     }
 
@@ -211,6 +212,7 @@ internal object CurrentAsrConstructionBaseline {
         } else {
             pushAdapter("FireRedAsrFileAsrEngine")
         }
+        AsrVendor.Tencent -> pushStream("TencentStreamAsrEngine")
         AsrVendor.XAsr -> pushStream("XAsrStreamAsrEngine")
     }
 
@@ -223,7 +225,7 @@ internal object CurrentAsrConstructionBaseline {
         AsrVendor.Soniox,
         AsrVendor.ElevenLabs,
         AsrVendor.OpenAI -> settings.streamingEnabled
-        AsrVendor.XAsr -> true
+        AsrVendor.XAsr, AsrVendor.Tencent -> true
         AsrVendor.SenseVoice,
         AsrVendor.FireRedAsr -> settings.pseudoStreamEnabled
         AsrVendor.SiliconFlow,
